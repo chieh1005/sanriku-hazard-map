@@ -20,12 +20,11 @@
   .risk-row { margin: 2px 0; }
   .risk-high { color: #c0392b; font-weight: 700; }
   .risk-low { color: #27ae60; font-weight: 700; }
-  .risk-none { color: #7f8c8d; }
   .toolbar-btn {
     display:inline-block; margin:4px 6px 0 0; padding:6px 10px; border-radius:8px; text-decoration:none;
-    background:#0f5c62; color:#fff; font-size:12px;
+    background:#ffffff; color:#000000; font-size:12px; border:1px solid #000000;
   }
-  .toolbar-btn.alt { background:#5d6d7e; }
+  .toolbar-btn.alt { background:#ffffff; color:#000000; border:1px solid #000000; }
   .legend-note { font-size: 12px; color: #666; margin-top: 6px; }
 </style>
 </head>
@@ -36,116 +35,29 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const map = L.map('map').setView([39.6417, 141.9553], 11);
-
-const base = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
-  attribution: '地理院タイル', maxZoom: 18
-}).addTo(map);
-
-const pale = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-  attribution: '地理院タイル', maxZoom: 18
-});
-
+const base = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: '地理院タイル', maxZoom: 18 }).addTo(map);
+const pale = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution: '地理院タイル', maxZoom: 18 });
 const layerDefs = {
-  flood: {
-    label: '洪水浸水想定 (想定最大規模)',
-    url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png',
-    legend: [
-      {color:'rgb(255,255,179)', text:'0.5〜3m未満'},
-      {color:'rgb(247,245,169)', text:'3〜5m未満'},
-      {color:'rgb(255,216,192)', text:'5〜10m未満'},
-      {color:'rgb(255,183,183)', text:'10〜20m未満'},
-      {color:'rgb(255,145,145)', text:'20m以上'}
-    ]
-  },
-  tsunami: {
-    label: '津波浸水想定',
-    url: 'https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_data/{z}/{x}/{y}.png',
-    legend: [
-      {color:'rgb(255,255,179)', text:'0.3〜1m未満'},
-      {color:'rgb(247,171,187)', text:'1〜3m未満'},
-      {color:'rgb(255,145,145)', text:'3〜5m未満'},
-      {color:'rgb(219,99,173)', text:'5〜10m未満'},
-      {color:'rgb(150,80,180)', text:'10m以上'}
-    ]
-  },
-  hightide: {
-    label: '高潮浸水想定',
-    url: 'https://disaportaldata.gsi.go.jp/raster/03_hightide_l2_shinsuishin_data/{z}/{x}/{y}.png',
-    legend: [
-      {color:'rgb(255,255,179)', text:'0.5〜3m未満'},
-      {color:'rgb(247,245,169)', text:'3〜5m未満'},
-      {color:'rgb(255,216,192)', text:'5〜10m未満'},
-      {color:'rgb(255,183,183)', text:'10〜20m未満'},
-      {color:'rgb(255,145,145)', text:'20m以上'}
-    ]
-  },
-  naisui: {
-    label: '內水氾濫浸水想定',
-    url: 'https://disaportaldata.gsi.go.jp/raster/02_naisui_data/{z}/{x}/{y}.png',
-    legend: [
-      {color:'rgb(255,255,179)', text:'0.5m未満'},
-      {color:'rgb(247,245,169)', text:'0.5〜1m未満'},
-      {color:'rgb(255,216,192)', text:'1〜3m未満'},
-      {color:'rgb(255,183,183)', text:'3m以上'}
-    ]
-  },
-  dosekiryu: {
-    label: '土砂災害警戒(土石流)',
-    url: 'https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png',
-    legend: [
-      {color:'rgb(255,153,153)', text:'土石流警戒區域'},
-      {color:'rgb(255,64,64)', text:'土石流特別警戒區域'}
-    ]
-  },
-  kyukeisha: {
-    label: '急傾斜地崩壊危険區域',
-    url: 'https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png',
-    legend: [
-      {color:'rgb(255,153,153)', text:'崩壊警戒區域'},
-      {color:'rgb(255,64,64)', text:'崩壊特別警戒區域'}
-    ]
-  }
+  flood: { label: '洪水浸水想定 (想定最大規模)', url: 'https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png', legend: [{color:'rgb(255,255,179)', text:'0.5〜3m未満'},{color:'rgb(247,245,169)', text:'3〜5m未満'},{color:'rgb(255,216,192)', text:'5〜10m未満'},{color:'rgb(255,183,183)', text:'10〜20m未満'},{color:'rgb(255,145,145)', text:'20m以上'}] },
+  tsunami: { label: '津波浸水想定', url: 'https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_data/{z}/{x}/{y}.png', legend: [{color:'rgb(255,255,179)', text:'0.3〜1m未満'},{color:'rgb(247,171,187)', text:'1〜3m未満'},{color:'rgb(255,145,145)', text:'3〜5m未満'},{color:'rgb(219,99,173)', text:'5〜10m未満'},{color:'rgb(150,80,180)', text:'10m以上'}] },
+  hightide: { label: '高潮浸水想定', url: 'https://disaportaldata.gsi.go.jp/raster/03_hightide_l2_shinsuishin_data/{z}/{x}/{y}.png', legend: [{color:'rgb(255,255,179)', text:'0.5〜3m未満'},{color:'rgb(247,245,169)', text:'3〜5m未満'},{color:'rgb(255,216,192)', text:'5〜10m未満'},{color:'rgb(255,183,183)', text:'10〜20m未満'},{color:'rgb(255,145,145)', text:'20m以上'}] },
+  naisui: { label: '內水氾濫浸水想定', url: 'https://disaportaldata.gsi.go.jp/raster/02_naisui_data/{z}/{x}/{y}.png', legend: [{color:'rgb(255,255,179)', text:'0.5m未満'},{color:'rgb(247,245,169)', text:'0.5〜1m未満'},{color:'rgb(255,216,192)', text:'1〜3m未満'},{color:'rgb(255,183,183)', text:'3m以上'}] },
+  dosekiryu: { label: '土砂災害警戒(土石流)', url: 'https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png', legend: [{color:'rgb(255,153,153)', text:'土石流警戒區域'},{color:'rgb(255,64,64)', text:'土石流特別警戒區域'}] },
+  kyukeisha: { label: '急傾斜地崩壊危険區域', url: 'https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png', legend: [{color:'rgb(255,153,153)', text:'崩壊警戒區域'},{color:'rgb(255,64,64)', text:'崩壊特別警戒區域'}] }
 };
-
 const activeLayers = {};
 const baseMaps = { '標準底圖': base, '淡色底圖': pale };
 const overlayMaps = {};
-Object.keys(layerDefs).forEach(key => {
-  overlayMaps[layerDefs[key].label] = L.tileLayer(layerDefs[key].url, {
-    opacity: 0.62, maxZoom: 17, minZoom: 2, crossOrigin: 'anonymous'
-  });
-});
-
+Object.keys(layerDefs).forEach(key => { overlayMaps[layerDefs[key].label] = L.tileLayer(layerDefs[key].url, { opacity: 0.62, maxZoom: 17, minZoom: 2, crossOrigin: 'anonymous' }); });
 L.control.layers(baseMaps, overlayMaps, {collapsed:false}).addTo(map);
-
-map.on('overlayadd', function(e){
-  const found = Object.keys(layerDefs).find(k => layerDefs[k].label === e.name);
-  if(found) activeLayers[found] = e.layer;
-});
-map.on('overlayremove', function(e){
-  const found = Object.keys(layerDefs).find(k => layerDefs[k].label === e.name);
-  if(found) delete activeLayers[found];
-});
-
+map.on('overlayadd', function(e){ const found = Object.keys(layerDefs).find(k => layerDefs[k].label === e.name); if(found) activeLayers[found] = e.layer; });
+map.on('overlayremove', function(e){ const found = Object.keys(layerDefs).find(k => layerDefs[k].label === e.name); if(found) delete activeLayers[found]; });
 const cities = {
-  '岩手縣宮古市': {
-    lat:39.6417, lon:141.9553,
-    desc:'谷灣地形，沿海低窪區津波風險高；可搭配洪水、高潮、內水圖層觀察複合風險。'
-  },
-  '青森縣階上町': {
-    lat:40.4547, lon:141.6217,
-    desc:'2026年4月20日觀測到最大震度5強，沿岸聚落可觀察海嘯與坡地複合風險。'
-  },
-  '岩手縣久慈市': {
-    lat:40.1911, lon:141.7797,
-    desc:'久慈港曾觀測海嘯，適合觀察津波與港灣周邊低地浸水風險。'
-  },
-  '宮城縣石卷市': {
-    lat:38.4342, lon:141.3033,
-    desc:'東日本大震災重災區之一，適合檢視津波、洪水、內水與避難動線。'
-  }
+  '岩手縣宮古市': { lat:39.6417, lon:141.9553, desc:'谷灣地形，沿海低窪區津波風險高；可搭配洪水、高潮、內水圖層觀察複合風險。' },
+  '青森縣階上町': { lat:40.4547, lon:141.6217, desc:'2026年4月20日觀測到最大震度5強，沿岸聚落可觀察海嘯與坡地複合風險。' },
+  '岩手縣久慈市': { lat:40.1911, lon:141.7797, desc:'久慈港曾觀測海嘯，適合觀察津波與港灣周邊低地浸水風險。' },
+  '宮城縣石卷市': { lat:38.4342, lon:141.3033, desc:'東日本大震災重災區之一，適合檢視津波、洪水、內水與避難動線。' }
 };
-
 Object.keys(cities).forEach(name => {
   const c = cities[name];
   L.marker([c.lat, c.lon]).addTo(map).on('click', function(){
@@ -154,7 +66,6 @@ Object.keys(cities).forEach(name => {
     panel.innerHTML = `<div class="popup-title">${name}</div><div>${c.desc}</div><div class="legend-note">建議切換不同圖層，再點地圖查詢該點風險。</div>`;
   });
 });
-
 const helperPanel = L.control({position:'topleft'});
 helperPanel.onAdd = function(){
   const div = L.DomUtil.create('div', 'panel top-panel');
@@ -172,85 +83,41 @@ helperPanel.onAdd = function(){
   return div;
 };
 helperPanel.addTo(map);
-
-function colorDistance(c1, c2){
-  return Math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2);
-}
-function parseRgb(str){
-  return str.match(/\d+/g).map(Number);
-}
-
+function colorDistance(c1, c2){ return Math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2); }
+function parseRgb(str){ return str.match(/\d+/g).map(Number); }
 function queryTileColor(key, latlng, callback){
-  const def = layerDefs[key];
-  const zoom = map.getZoom();
-  const tileSize = 256;
-  const scale = Math.pow(2, zoom);
+  const def = layerDefs[key], zoom = map.getZoom(), tileSize = 256, scale = Math.pow(2, zoom);
   const worldX = (latlng.lng + 180) / 360 * scale * tileSize;
   const worldY = (1 - Math.log(Math.tan(latlng.lat*Math.PI/180) + 1/Math.cos(latlng.lat*Math.PI/180)) / Math.PI) / 2 * scale * tileSize;
-  const tileX = Math.floor(worldX / tileSize);
-  const tileY = Math.floor(worldY / tileSize);
-  const px = Math.floor(worldX % tileSize);
-  const py = Math.floor(worldY % tileSize);
+  const tileX = Math.floor(worldX / tileSize), tileY = Math.floor(worldY / tileSize), px = Math.floor(worldX % tileSize), py = Math.floor(worldY % tileSize);
   const url = def.url.replace('{z}', zoom).replace('{x}', tileX).replace('{y}', tileY);
-
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
+  const img = new Image(); img.crossOrigin = 'anonymous';
   img.onload = function(){
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = tileSize;
-      canvas.height = tileSize;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+      const canvas = document.createElement('canvas'); canvas.width = tileSize; canvas.height = tileSize;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
       const pixel = ctx.getImageData(px, py, 1, 1).data;
-      if(pixel[3] === 0){
-        callback(null);
-        return;
-      }
-      const rgb = [pixel[0], pixel[1], pixel[2]];
-      let best = null, bestDist = 1e9;
-      def.legend.forEach(item => {
-        const d = colorDistance(parseRgb(item.color), rgb);
-        if(d < bestDist){
-          bestDist = d;
-          best = item;
-        }
-      });
+      if(pixel[3] === 0){ callback(null); return; }
+      const rgb = [pixel[0], pixel[1], pixel[2]]; let best = null, bestDist = 1e9;
+      def.legend.forEach(item => { const d = colorDistance(parseRgb(item.color), rgb); if(d < bestDist){ bestDist = d; best = item; } });
       callback(best);
-    } catch(e){
-      callback(null);
-    }
+    } catch(e){ callback(null); }
   };
-  img.onerror = function(){
-    callback(null);
-  };
+  img.onerror = function(){ callback(null); };
   img.src = url;
 }
-
 map.on('click', function(e){
   const keys = Object.keys(activeLayers);
-  if(keys.length === 0){
-    L.popup().setLatLng(e.latlng).setContent('請先在右上角勾選至少一個災害圖層，再點擊地圖查詢。').openOn(map);
-    return;
-  }
-
-  let pending = keys.length;
-  let html = '<div class="popup-title">此地點複合災害查詢結果</div>';
-  const results = {};
-
+  if(keys.length === 0){ L.popup().setLatLng(e.latlng).setContent('請先在右上角勾選至少一個災害圖層，再點擊地圖查詢。').openOn(map); return; }
+  let pending = keys.length; let html = '<div class="popup-title">此地點複合災害查詢結果</div>'; const results = {};
   keys.forEach(key => {
     queryTileColor(key, e.latlng, res => {
-      results[key] = res;
-      pending -= 1;
+      results[key] = res; pending -= 1;
       if(pending === 0){
         keys.forEach(k => {
-          const name = layerDefs[k].label;
-          const r = results[k];
-          if(r === null){
-            html += `<div class="risk-row">${name}：<span class="risk-low">無資料 / 非風險區</span></div>`;
-          } else {
-            html += `<div class="risk-row">${name}：<span class="risk-high">${r.text}</span></div>`;
-          }
+          const name = layerDefs[k].label, r = results[k];
+          if(r === null) html += `<div class="risk-row">${name}：<span class="risk-low">無資料 / 非風險區</span></div>`;
+          else html += `<div class="risk-row">${name}：<span class="risk-high">${r.text}</span></div>`;
         });
         html += '<div class="legend-note">提示：可切換淡色底圖，或搭配左上角官方即時網站交叉查看。</div>';
         L.popup({maxWidth:300}).setLatLng(e.latlng).setContent(html).openOn(map);
