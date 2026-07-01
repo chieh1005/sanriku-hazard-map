@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>三陸沖強震 災害潛勢地圖</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  html, body, #map { height: 100%; margin: 0; padding: 0; }
+  .legend {
+    background: white; padding: 8px 12px; font-size: 13px;
+    border-radius: 6px; box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// 初始中心：岩手県宮古市（可依需求改成其他受災城鎮）
+var map = L.map('map').setView([39.6417, 141.9553], 12);
+
+// 底圖：地理院地図
+L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+  attribution: '地理院タイル',
+  maxZoom: 18
+}).addTo(map);
+
+// 洪水浸水想定區域(想定最大規模)
+var flood = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png', {
+  attribution: 'ハザードマップポータルサイト',
+  opacity: 0.6, maxZoom: 17, minZoom: 2
+});
+
+// 津波(海嘯)浸水想定
+var tsunami = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_data/{z}/{x}/{y}.png', {
+  attribution: 'ハザードマップポータルサイト',
+  opacity: 0.6, maxZoom: 17, minZoom: 2
+});
+
+// 土砂災害警戒區域(土石流)
+var dosekiryu = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png', {
+  attribution: 'ハザードマップポータルサイト',
+  opacity: 0.6, maxZoom: 17, minZoom: 2
+});
+
+// 急傾斜地崩壊危険區域
+var kyukeisha = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png', {
+  attribution: 'ハザードマップポータルサイト',
+  opacity: 0.6, maxZoom: 17, minZoom: 2
+});
+
+tsunami.addTo(map); // 預設顯示海嘯圖層
+
+var overlays = {
+  "洪水浸水想定 (想定最大規模)": flood,
+  "津波浸水想定": tsunami,
+  "土砂災害警戒(土石流)": dosekiryu,
+  "急傾斜地崩壊危険區域": kyukeisha
+};
+
+L.control.layers(null, overlays, {collapsed:false}).addTo(map);
+
+// 標記三陸沖強震受災城鎮
+var cities = [
+  {name:"岩手縣宮古市", lat:39.6417, lon:141.9553},
+  {name:"青森縣階上町", lat:40.4547, lon:141.6217},
+  {name:"岩手縣久慈市", lat:40.1911, lon:141.7797},
+  {name:"宮城縣石卷市", lat:38.4342, lon:141.3033}
+];
+cities.forEach(function(c){
+  L.marker([c.lat, c.lon]).addTo(map).bindPopup(c.name);
+});
+
+// 圖例
+var legend = L.control({position:'bottomright'});
+legend.onAdd = function(){
+  var div = L.DomUtil.create('div','legend');
+  div.innerHTML = "<b>2026三陸沖強震 災害潛勢地圖</b><br>資料來源：ハザードマップポータルサイト(國土地理院)";
+  return div;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
