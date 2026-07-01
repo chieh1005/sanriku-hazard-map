@@ -27,17 +27,6 @@
   }
   .toolbar-btn.alt { background:#5d6d7e; }
   .legend-note { font-size: 12px; color: #666; margin-top: 6px; }
-  .shelter-icon {
-    background:#2e7d32; color:#fff; border-radius:50%; width:22px; height:22px;
-    display:flex; align-items:center; justify-content:center; font-size:13px; border:2px solid #fff;
-    box-shadow:0 2px 6px rgba(0,0,0,.35);
-  }
-  #apikey-box { margin-top:6px; }
-  #apikey-box input { width:100%; font-size:12px; padding:4px; box-sizing:border-box; margin-top:4px; }
-  #apikey-box button {
-    margin-top:6px; padding:5px 10px; font-size:12px; background:#0f5c62; color:#fff;
-    border:none; border-radius:6px; cursor:pointer;
-  }
 </style>
 </head>
 <body>
@@ -56,7 +45,6 @@ const pale = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.
   attribution: '地理院タイル', maxZoom: 18
 });
 
-// ---------------- 災害潛勢圖層 ----------------
 const layerDefs = {
   flood: {
     label: '洪水浸水想定 (想定最大規模)',
@@ -139,7 +127,6 @@ map.on('overlayremove', function(e){
   if(found) delete activeLayers[found];
 });
 
-// ---------------- 受災城鎮標記 ----------------
 const cities = {
   '岩手縣宮古市': {
     lat:39.6417, lon:141.9553,
@@ -168,73 +155,8 @@ Object.keys(cities).forEach(name => {
   });
 });
 
-// ---------------- 避難場所 ----------------
-let shelterLayer = L.layerGroup();
-let apiKey = '';
-
-function latLonToTile(lat, lon, z){
-  const n = Math.pow(2, z);
-  const x = Math.floor((lon + 180) / 360 * n);
-  const latRad = lat * Math.PI / 180;
-  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1/Math.cos(latRad)) / Math.PI) / 2 * n);
-  return {x, y};
-}
-
-async function loadShelters(){
-  if(!apiKey){
-    alert('請先在左上角輸入不動産情報ライブラリ API金鑰，才能載入避難場所資料。');
-    return;
-  }
-  shelterLayer.clearLayers();
-  const zoom = 14;
-  const bounds = map.getBounds();
-  const nw = latLonToTile(bounds.getNorth(), bounds.getWest(), zoom);
-  const se = latLonToTile(bounds.getSouth(), bounds.getEast(), zoom);
-
-  const tiles = [];
-  for(let x = nw.x; x <= se.x; x++){
-    for(let y = nw.y; y <= se.y; y++){
-      tiles.push({x, y});
-    }
-  }
-
-  if(tiles.length > 16){
-    alert('目前地圖範圍太大，請先放大地圖後再載入避難場所。');
-    return;
-  }
-
-  for(const t of tiles){
-    const url = `https://www.reinfolib.mlit.go.jp/ex-api/external/XGT001?response_format=geojson&z=${zoom}&x=${t.x}&y=${t.y}`;
-    try {
-      const res = await fetch(url, {
-        headers: { 'Ocp-Apim-Subscription-Key': apiKey }
-      });
-      if(!res.ok) continue;
-      const data = await res.json();
-      (data.features || []).forEach(f => {
-        const coords = f.geometry && f.geometry.coordinates;
-        if(!coords) return;
-        const [lon, lat] = coords;
-        const props = f.properties || {};
-        const name = props.name || props['避難場所名'] || '指定緊急避難場所';
-        const icon = L.divIcon({
-          className:'',
-          html:'<div class="shelter-icon">避</div>',
-          iconSize:[22,22]
-        });
-        L.marker([lat, lon], {icon})
-          .bindPopup(`<b>${name}</b>`)
-          .addTo(shelterLayer);
-      });
-    } catch(e){
-      console.warn('避難場所載入失敗', t, e);
-    }
-  }
-  shelterLayer.addTo(map);
-}
-
-const apiPanel = L.control({position:'topleft'});
-apiPanel.onAdd = function(){
+const helperPanel = L.control({position:'topleft'});
+helperPanel.onAdd = function(){
   const div = L.DomUtil.create('div', 'panel top-panel');
   div.innerHTML = `
     <div class="popup-title">複合災害互動地圖</div>
@@ -245,25 +167,12 @@ apiPanel.onAdd = function(){
       <a class="toolbar-btn" href="https://www.jma.go.jp/bosai/risk/m_index.html" target="_blank" rel="noopener noreferrer">氣象廳 即時危險度</a>
       <a class="toolbar-btn alt" href="https://www.river.go.jp/index/" target="_blank" rel="noopener noreferrer">川の防災情報</a>
     </div>
-    <div id="apikey-box">
-      <div class="legend-note">載入指定緊急避難場所需 API Key：</div>
-      <input id="apikey-input" type="text" placeholder="貼上你的 API Key">
-      <button id="load-shelter-btn">載入目前地圖範圍的避難場所</button>
-    </div>
   `;
   L.DomEvent.disableClickPropagation(div);
   return div;
 };
-apiPanel.addTo(map);
+helperPanel.addTo(map);
 
-setTimeout(() => {
-  document.getElementById('load-shelter-btn').addEventListener('click', function(){
-    apiKey = document.getElementById('apikey-input').value.trim();
-    loadShelters();
-  });
-}, 300);
-
-// ---------------- 點擊查詢災害 ----------------
 function colorDistance(c1, c2){
   return Math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2);
 }
@@ -309,11 +218,11 @@ function queryTileColor(key, latlng, callback){
       });
       callback(best);
     } catch(e){
-      callback('error');
+      callback(null);
     }
   };
   img.onerror = function(){
-    callback('error');
+    callback(null);
   };
   img.src = url;
 }
@@ -337,9 +246,7 @@ map.on('click', function(e){
         keys.forEach(k => {
           const name = layerDefs[k].label;
           const r = results[k];
-          if(r === 'error'){
-            html += `<div class="risk-row">${name}：<span class="risk-none">圖磚讀取失敗 / 該縮放層無資料</span></div>`;
-          } else if(r === null){
+          if(r === null){
             html += `<div class="risk-row">${name}：<span class="risk-low">無資料 / 非風險區</span></div>`;
           } else {
             html += `<div class="risk-row">${name}：<span class="risk-high">${r.text}</span></div>`;
