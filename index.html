@@ -2,81 +2,223 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>三陸沖強震 災害潛勢地圖</title>
+<title>三陸沖強震 互動式災害潛勢地圖</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  html, body, #map { height: 100%; margin: 0; padding: 0; }
-  .legend {
-    background: white; padding: 8px 12px; font-size: 13px;
-    border-radius: 6px; box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  html, body, #map { height: 100%; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
+  .legend, .info-panel {
+    background: white; padding: 10px 14px; font-size: 13px;
+    border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.35); line-height:1.6;
+  }
+  .legend-color { display:inline-block; width:14px; height:14px; margin-right:6px; vertical-align:middle; border:1px solid #999;}
+  .popup-title { font-weight:bold; font-size:14px; margin-bottom:4px; }
+  .risk-row { margin:2px 0; }
+  .risk-high { color:#c0392b; font-weight:bold; }
+  .risk-mid { color:#e67e22; font-weight:bold; }
+  .risk-low { color:#27ae60; font-weight:bold; }
+  .risk-none { color:#7f8c8d; }
+  #city-info {
+    position:absolute; top:10px; left:60px; z-index:1000; max-width:280px; display:none;
   }
 </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="city-info" class="info-panel"></div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// 初始中心：岩手県宮古市（可依需求改成其他受災城鎮）
 var map = L.map('map').setView([39.6417, 141.9553], 12);
 
-// 底圖：地理院地図
 L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
-  attribution: '地理院タイル',
-  maxZoom: 18
+  attribution: '地理院タイル', maxZoom: 18
 }).addTo(map);
 
-// 洪水浸水想定區域(想定最大規模)
-var flood = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png', {
-  attribution: 'ハザードマップポータルサイト',
-  opacity: 0.6, maxZoom: 17, minZoom: 2
-});
-
-// 津波(海嘯)浸水想定
-var tsunami = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_data/{z}/{x}/{y}.png', {
-  attribution: 'ハザードマップポータルサイト',
-  opacity: 0.6, maxZoom: 17, minZoom: 2
-});
-
-// 土砂災害警戒區域(土石流)
-var dosekiryu = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png', {
-  attribution: 'ハザードマップポータルサイト',
-  opacity: 0.6, maxZoom: 17, minZoom: 2
-});
-
-// 急傾斜地崩壊危険區域
-var kyukeisha = L.tileLayer('https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png', {
-  attribution: 'ハザードマップポータルサイト',
-  opacity: 0.6, maxZoom: 17, minZoom: 2
-});
-
-tsunami.addTo(map); // 預設顯示海嘯圖層
-
-var overlays = {
-  "洪水浸水想定 (想定最大規模)": flood,
-  "津波浸水想定": tsunami,
-  "土砂災害警戒(土石流)": dosekiryu,
-  "急傾斜地崩壊危険區域": kyukeisha
+var layerDefs = {
+  flood: {
+    label: "洪水浸水想定 (想定最大規模)",
+    url: "https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png",
+    legend: [
+      {color:"rgb(255,255,179)", text:"0.5〜3m未満"},
+      {color:"rgb(247,245,169)", text:"3〜5m未満"},
+      {color:"rgb(255,216,192)", text:"5〜10m未満"},
+      {color:"rgb(255,183,183)", text:"10〜20m未満"},
+      {color:"rgb(255,145,145)", text:"20m以上"}
+    ]
+  },
+  tsunami: {
+    label: "津波浸水想定",
+    url: "https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_data/{z}/{x}/{y}.png",
+    legend: [
+      {color:"rgb(255,255,179)", text:"0.3〜1m未満"},
+      {color:"rgb(247,171,187)", text:"1〜3m未満"},
+      {color:"rgb(255,145,145)", text:"3〜5m未満"},
+      {color:"rgb(219,99,173)", text:"5〜10m未満"},
+      {color:"rgb(150,80,180)", text:"10m以上"}
+    ]
+  },
+  dosekiryu: {
+    label: "土砂災害警戒(土石流)",
+    url: "https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png",
+    legend: [
+      {color:"rgb(255,153,153)", text:"土石流警戒區域"},
+      {color:"rgb(255,64,64)", text:"土石流特別警戒區域"}
+    ]
+  },
+  kyukeisha: {
+    label: "急傾斜地崩壊危険區域",
+    url: "https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png",
+    legend: [
+      {color:"rgb(255,153,153)", text:"崩壊警戒區域"},
+      {color:"rgb(255,64,64)", text:"崩壊特別警戒區域"}
+    ]
+  }
 };
 
-L.control.layers(null, overlays, {collapsed:false}).addTo(map);
+var activeLayers = {};
+var layerControlDiv = L.control({position:'topright'});
 
-// 標記三陸沖強震受災城鎮
-var cities = [
-  {name:"岩手縣宮古市", lat:39.6417, lon:141.9553},
-  {name:"青森縣階上町", lat:40.4547, lon:141.6217},
-  {name:"岩手縣久慈市", lat:40.1911, lon:141.7797},
-  {name:"宮城縣石卷市", lat:38.4342, lon:141.3033}
-];
-cities.forEach(function(c){
-  L.marker([c.lat, c.lon]).addTo(map).bindPopup(c.name);
+layerControlDiv.onAdd = function(){
+  var div = L.DomUtil.create('div','legend');
+  var html = "<b>圖層選擇（勾選後點地圖查詢）</b><br>";
+  Object.keys(layerDefs).forEach(function(key){
+    html += `<label><input type="checkbox" class="layer-toggle" data-key="${key}"> ${layerDefs[key].label}</label><br>`;
+  });
+  div.innerHTML = html;
+  L.DomEvent.disableClickPropagation(div);
+  return div;
+};
+layerControlDiv.addTo(map);
+
+setTimeout(function(){
+  document.querySelectorAll('.layer-toggle').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var key = this.dataset.key;
+      if(this.checked){
+        var def = layerDefs[key];
+        var layer = L.tileLayer(def.url, {opacity:0.65, maxZoom:17, minZoom:2, crossOrigin:"anonymous"});
+        layer.addTo(map);
+        activeLayers[key] = layer;
+      } else {
+        if(activeLayers[key]){ map.removeLayer(activeLayers[key]); delete activeLayers[key]; }
+      }
+    });
+  });
+}, 300);
+
+var cityData = {
+  "岩手縣宮古市": {
+    lat:39.6417, lon:141.9553,
+    desc: "谷灣地形，2011年海嘯重災區；2026年強震海嘯達0.8公尺（久慈港觀測附近區域）。港灣與市區低窪地帶屬津波高風險區。"
+  },
+  "青森縣階上町": {
+    lat:40.4547, lon:141.6217,
+    desc: "2026年4月20日觀測到最大震度5強，為此次地震震度最高地區之一，沿岸漁村地形對海嘯放大效應敏感。"
+  },
+  "岩手縣久慈市": {
+    lat:40.1911, lon:141.7797,
+    desc: "久慈港觀測到約0.8公尺海嘯，屬中小型海嘯代表觀測點，港灣設施需留意津波警戒。"
+  },
+  "宮城縣石卷市": {
+    lat:38.4342, lon:141.3033,
+    desc: "此次地震造成道路損壞案例地區之一，2011年東日本大震災重災區，長期屬海嘯與地震複合高風險城市。"
+  }
+};
+
+Object.keys(cityData).forEach(function(name){
+  var c = cityData[name];
+  var marker = L.marker([c.lat, c.lon]).addTo(map);
+  marker.on('click', function(){
+    var panel = document.getElementById('city-info');
+    panel.style.display = 'block';
+    panel.innerHTML = `<div class="popup-title">${name}</div><div>${c.desc}</div>
+      <div style="margin-top:6px;font-size:12px;color:#888;">點擊地圖空白處可查詢該點災害潛勢</div>`;
+  });
 });
 
-// 圖例
+function colorDistance(c1, c2){
+  return Math.sqrt(Math.pow(c1[0]-c2[0],2)+Math.pow(c1[1]-c2[1],2)+Math.pow(c1[2]-c2[2],2));
+}
+function parseRgb(str){
+  var m = str.match(/\d+/g).map(Number);
+  return m;
+}
+
+function queryTileColor(key, latlng, callback){
+  var def = layerDefs[key];
+  var zoom = map.getZoom();
+  var tileSize = 256;
+  var scale = Math.pow(2, zoom);
+  var worldX = (latlng.lng + 180) / 360 * scale * tileSize;
+  var worldY = (1 - Math.log(Math.tan(latlng.lat*Math.PI/180) + 1/Math.cos(latlng.lat*Math.PI/180)) / Math.PI) / 2 * scale * tileSize;
+  var tileX = Math.floor(worldX / tileSize);
+  var tileY = Math.floor(worldY / tileSize);
+  var px = Math.floor(worldX % tileSize);
+  var py = Math.floor(worldY % tileSize);
+
+  var url = def.url.replace('{z}', zoom).replace('{x}', tileX).replace('{y}', tileY);
+  var img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = function(){
+    try{
+      var canvas = document.createElement('canvas');
+      canvas.width = tileSize; canvas.height = tileSize;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      var pixel = ctx.getImageData(px, py, 1, 1).data;
+      if(pixel[3] === 0){ callback(null); return; }
+      var rgb = [pixel[0], pixel[1], pixel[2]];
+      var best = null, bestDist = 999999;
+      def.legend.forEach(function(item){
+        var lc = parseRgb(item.color);
+        var d = colorDistance(lc, rgb);
+        if(d < bestDist){ bestDist = d; best = item; }
+      });
+      callback(best);
+    }catch(e){
+      callback('error');
+    }
+  };
+  img.onerror = function(){ callback('error'); };
+  img.src = url;
+}
+
+map.on('click', function(e){
+  var activeKeys = Object.keys(activeLayers);
+  if(activeKeys.length === 0){
+    L.popup().setLatLng(e.latlng).setContent("請先在右上角勾選至少一個災害圖層，再點擊地圖查詢。").openOn(map);
+    return;
+  }
+  var pending = activeKeys.length;
+  var resultsHtml = `<div class="popup-title">此地點災害潛勢查詢結果</div>`;
+  var results = {};
+  activeKeys.forEach(function(key){
+    queryTileColor(key, e.latlng, function(res){
+      results[key] = res;
+      pending--;
+      if(pending === 0){
+        activeKeys.forEach(function(k){
+          var def = layerDefs[k];
+          var r = results[k];
+          if(r === 'error'){
+            resultsHtml += `<div class="risk-row">${def.label}：<span class="risk-none">圖磚讀取失敗(可能超出資料涵蓋範圍)</span></div>`;
+          } else if(r === null){
+            resultsHtml += `<div class="risk-row">${def.label}：<span class="risk-low">無資料 / 非風險區</span></div>`;
+          } else {
+            resultsHtml += `<div class="risk-row">${def.label}：<span class="risk-high">${r.text}</span></div>`;
+          }
+        });
+        L.popup({maxWidth:280}).setLatLng(e.latlng).setContent(resultsHtml).openOn(map);
+      }
+    });
+  });
+});
+
 var legend = L.control({position:'bottomright'});
 legend.onAdd = function(){
   var div = L.DomUtil.create('div','legend');
-  div.innerHTML = "<b>2026三陸沖強震 災害潛勢地圖</b><br>資料來源：ハザードマップポータルサイト(國土地理院)";
+  div.innerHTML = "<b>2026三陸沖強震 互動式災害潛勢地圖</b><br>1. 勾選右上角圖層　2. 點擊地圖任一點查詢等級<br>資料來源：ハザードマップポータルサイト(國土地理院)";
   return div;
 };
 legend.addTo(map);
